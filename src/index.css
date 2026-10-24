@@ -21,6 +21,7 @@ input:focus{border-color:var(--red)}
 .btn.full{width:100%}.btn.sm{padding:8px 14px;font-size:13px;border-radius:11px}
 .btn.sec{background:transparent;color:var(--red);border:1.4px solid var(--red)}
 .btn:disabled{opacity:.5}
+.link{display:block;width:100%;margin-top:14px;background:none;border:0;color:var(--mute);font-size:13px;text-decoration:underline;cursor:pointer}
 .err{background:#ff5a4f24;color:#ff8a82;padding:10px 12px;border-radius:12px;margin-bottom:12px}
 .okmsg{background:#06d79c1f;color:var(--green);padding:10px 12px;border-radius:12px;margin-bottom:12px}
 .empty{text-align:center;color:var(--mute);padding:20px 8px}

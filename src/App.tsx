@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { buscar, getHoy, getLista, marcarPresente, supabase } from './api'
+import { buscar, getHoy, getLista, marcarPresente, puedeRegistrarse, supabase } from './api'
 import type { Alumna, Clase, Hoy } from './api'
 
 const TZ = 'America/Argentina/Buenos_Aires'
@@ -26,26 +26,43 @@ export default function App() {
 }
 
 function Login() {
+  const [modo, setModo] = useState<'entrar' | 'crear'>('entrar')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [info, setInfo] = useState('')
   const [busy, setBusy] = useState(false)
   async function submit(e: React.FormEvent) {
     e.preventDefault()
-    setBusy(true); setError('')
-    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
-    if (error) setError('No pudimos ingresar: revisá el email y la contraseña.')
+    setBusy(true); setError(''); setInfo('')
+    const mail = email.trim()
+    if (modo === 'entrar') {
+      const { error } = await supabase.auth.signInWithPassword({ email: mail, password })
+      if (error) setError(/confirm/i.test(error.message) ? 'Todavía no confirmaste tu email: abrí el mensaje que te mandamos y tocá el link.' : 'No pudimos ingresar: revisá el email y la contraseña.')
+    } else {
+      try {
+        if (!(await puedeRegistrarse(mail))) { setError('Este email no está autorizado como profe. Pedile a recepción que te dé el acceso.'); setBusy(false); return }
+        if (password.length < 6) { setError('La contraseña tiene que tener al menos 6 caracteres.'); setBusy(false); return }
+        const { error } = await supabase.auth.signUp({ email: mail, password, options: { emailRedirectTo: window.location.origin + '/' } })
+        if (error) setError(error.message)
+        else setInfo('¡Listo! Te mandamos un email para confirmar tu cuenta. Abrilo (mirá también en spam), tocá el link y después ingresá con tu email y contraseña.')
+      } catch (err) { setError((err as Error).message) }
+    }
     setBusy(false)
   }
   return (
     <div className="center">
       <form className="card login" onSubmit={submit}>
         <img className="logo-big" src={logo} alt="Aquiles GYM" />
-        <p className="sub" style={{ textAlign: 'center' }}>Ingreso de profes</p>
+        <p className="sub" style={{ textAlign: 'center' }}>{modo === 'entrar' ? 'Ingreso de profes' : 'Crear mi cuenta de profe'}</p>
         {error && <div className="err">{error}</div>}
+        {info && <div className="okmsg">{info}</div>}
         <div className="field"><label>Email</label><input type="email" value={email} onChange={e => setEmail(e.target.value)} autoComplete="username" required /></div>
-        <div className="field"><label>Contraseña</label><input type="password" value={password} onChange={e => setPassword(e.target.value)} autoComplete="current-password" required /></div>
-        <button className="btn full" disabled={busy}>{busy ? 'Entrando…' : 'Entrar'}</button>
+        <div className="field"><label>{modo === 'entrar' ? 'Contraseña' : 'Elegí una contraseña'}</label><input type="password" value={password} onChange={e => setPassword(e.target.value)} autoComplete={modo === 'entrar' ? 'current-password' : 'new-password'} required /></div>
+        <button className="btn full" disabled={busy}>{busy ? 'Un momento…' : modo === 'entrar' ? 'Entrar' : 'Crear mi cuenta'}</button>
+        <button type="button" className="link" onClick={() => { setModo(modo === 'entrar' ? 'crear' : 'entrar'); setError(''); setInfo('') }}>
+          {modo === 'entrar' ? 'Primera vez: crear mi cuenta' : 'Ya tengo cuenta: ingresar'}
+        </button>
       </form>
     </div>
   )

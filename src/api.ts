@@ -18,6 +18,7 @@ async function rpc<T>(fn: string, args?: Record<string, unknown>): Promise<T> {
   return data as T
 }
 
+export const puedeRegistrarse = (email: string) => rpc<boolean>('teacher_can_register', { p_email: email })
 export const getHoy = () => rpc<Hoy>('teacher_today')
 export const getLista = (event: string) => rpc<{ ok: boolean; reason?: string; alumnas?: Alumna[] }>('teacher_roster', { p_event: event })
 export const buscar = (q: string) => rpc<{ ok: boolean; reason?: string; alumnas?: Alumna[] }>('teacher_find_members', { p_q: q })
